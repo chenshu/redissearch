@@ -26,7 +26,7 @@ class Search(object):
         # redis
         pool = redis.ConnectionPool(host=self.config.redis['host'], port=self.config.redis['port'], db=self.config.redis['db'])
         self.r = redis.Redis(connection_pool=pool)
-        #self.r = redis.StrictRedis(host=self.config.redis['host'], port=self.config.redis['port'], db=self.config.redis['db'])
+        # self.r = redis.StrictRedis(host=self.config.redis['host'], port=self.config.redis['port'], db=self.config.redis['db'])
         self.pipeline = self.r.pipeline()
         # 加载分词
         mmseg.dict_load_defaults()
@@ -37,6 +37,13 @@ class Search(object):
         results = []
         if keyword is None or keyword == '':
             return results
+
+        # 转成UTF-8
+        try:
+            keyword = keyword.encode('utf-8')
+        except UnicodeDecodeError, e:
+            pass
+
         max_length = max(50, count)
         keyword = keyword.lower()
 
@@ -55,11 +62,11 @@ class Search(object):
             cnt = self.r.sinterstore(temp_store_key, ['%s:%s' % (field, result) for result in results])
             if cnt == 0:
                 return []
-            # 缓存时间三个小时
-            self.r.expire(temp_store_key, 10800)
+            # 缓存时间
+            self.r.expire(temp_store_key, 60 * 5)
 
         # 如果建立了相关索引，可以通过sort直接获取数据
-        #return self.r.sort(temp_store_key, by='%s:score:%s' % (field, '*'), get='%s:%s' % (field, '*'), start=0, num=count, desc=True)
+        # return self.r.sort(temp_store_key, by='%s:score:%s' % (field, '*'), get='%s:%s' % (field, '*'), start=0, num=count, desc=True)
 
         # 获取id
         ids = self.r.sort(temp_store_key, by='%s:score:%s' % (field, '*'), start=0, num=count, desc=True)
@@ -72,6 +79,13 @@ class Search(object):
         results = []
         if prefix is None or prefix == '':
             return results
+
+        # 转成UTF-8
+        try:
+            prefix = prefix.encode('utf-8')
+        except UnicodeDecodeError, e:
+            pass
+
         rangelen = 20
         max_length = max(50, count)
         prefix = prefix.lower()
@@ -106,11 +120,11 @@ class Search(object):
         if self.r.exists(temp_store_key) is False:
             # 前缀结果的并集缓存
             self.r.sunionstore(temp_store_key, ['%s:%s' % (field, result) for result in results])
-            # 缓存时间三个小时
-            self.r.expire(temp_store_key, 10800)
+            # 缓存时间
+            self.r.expire(temp_store_key, 60 * 5)
 
         # 如果建立了相关索引，可以通过sort直接获取数据
-        #return self.r.sort(temp_store_key, by='%s:score:%s' % (field, '*'), get='%s:%s' % (field, '*'), start=0, num=count, desc=True)
+        # return self.r.sort(temp_store_key, by='%s:score:%s' % (field, '*'), get='%s:%s' % (field, '*'), start=0, num=count, desc=True)
 
         # 获取id
         ids = self.r.sort(temp_store_key, by='%s:score:%s' % (field, '*'), start=0, num=count, desc=True)
@@ -125,10 +139,11 @@ if __name__ == '__main__':
     kwargs = {'redis' : redis_config}
     kwargs = {'config' : Config(**kwargs)}
     search = Search(**kwargs)
-    results = search.complete('title', sys.argv[1], 20)
+    word = sys.argv[1].decode('utf-8')
+    results = search.complete('title', word, 20)
     for result in results:
         print result
     print '====================='
-    results = search.query('title', sys.argv[1], 20)
+    results = search.query('title', word, 20)
     for result in results:
         print result

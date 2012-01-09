@@ -94,8 +94,7 @@ class Index(object):
             # self.r.zadd('compl:%s' % (self.field), *dic)
             self.pipeline.zadd('compl:%s' % (self.field), *dic)
 
-        if self.config.batch_create_enable == False:
-            self.pipeline.execute()
+        self.pipeline.execute()
         return True
 
     def delete(self, tid, title, field):
@@ -155,33 +154,28 @@ class Index(object):
             # self.r.zrem('compl:%s' % (self.field), *dic)
             self.pipeline.zrem('compl:%s' % (self.field), *dic)
 
-        if self.config.batch_create_enable == False:
-            self.pipeline.execute()
+        self.pipeline.execute()
         return True
-
-    def create(self):
-        if self.config.batch_create_enable == True:
-            self.pipeline.execute()
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
         print 'error'
         sys.exit()
     redis_config = {'host' : 'localhost', 'port' : 6379, 'db' : 0}
-    kwargs = {'redis' : redis_config, 'prefix_index_enable' : True, 'batch_create_enable' : False}
+    kwargs = {'redis' : redis_config, 'prefix_index_enable' : True}
     kwargs = {'config' : Config(**kwargs)}
     index = Index(**kwargs)
     index.add('c088888888', '西子小小', 'title')
     index.add('c055555555', 'Awk教程', 'title')
     index.add('c066666666', '失恋33天电影', 'title')
     index.add('c000027a1s', 'Cisco.Press.Cisco.Self-Study.Implementing.IPv6.Networks.pdf', 'title')
+    #index.add('s0b9u1utx0', 'ABC Pronunciary.flv', 'title')
 
     index.delete('c088888888', '西子小小', 'title')
     index.delete('c055555555', 'Awk教程', 'title')
     index.delete('c066666666', '失恋33天电影', 'title')
     index.delete('c000027a1s', 'Cisco.Press.Cisco.Self-Study.Implementing.IPv6.Networks.pdf', 'title')
 
-    '''
     with open(sys.argv[1]) as fp:
         i = 0
         for line in fp:
@@ -190,4 +184,3 @@ if __name__ == '__main__':
                 print i
             tid, uid, title, attachments = line.strip().split('\t')
             index.add(tid, title, 'title')
-    '''

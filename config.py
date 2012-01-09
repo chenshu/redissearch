@@ -18,9 +18,6 @@ class Config(object):
         # 默认创建前缀索引
         if 'prefix_index_enable' not in kwargs:
             self.prefix_index_enable = True
-        # 默认不批量创建索引
-        if 'batch_create_enable' not in kwargs:
-            self.batch_create_enable = False
 
 if __name__ == '__main__':
     kwargs = {'host' : 'localhost', 'port' : 6379, 'db' : 0}

@@ -81,14 +81,14 @@ class Index(object):
             self.pipeline.sadd('%s:%s' % (self.field, word), self.tid)
 
             dic = []
-            for word in words:
-                for i in range(len(word)):
-                    prefix = word[:i+1]
+            for w in words:
+                for i in range(len(w)):
+                    prefix = w[:i+1]
                     dic.append(prefix)
                     dic.append(0.0)
                     #print prefix.encode('utf-8')
                 # 完整的词增加一项，用*号区分
-                prefix = '%s%s' % (word, '*')
+                prefix = '%s%s' % (w, '*')
                 dic.append(prefix)
                 dic.append(0.0)
             # self.r.zadd('compl:%s' % (self.field), *dic)

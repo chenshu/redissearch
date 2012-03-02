@@ -18,17 +18,24 @@ class CompleteHandler(tornado.web.RequestHandler):
     def get(self):
         try:
             prefix = self.get_argument('q', None)
+            self.t = self.get_argument('t', None)
             self.search('title', prefix, 10, self.async_callback(self.on_response))
         except UnicodeDecodeError, e:
             self.write(json_encode({'error' : 'cannot decode character'}))
             self.finsh()
 
-    def search(self, t, prefix, count, callback):
-        results = self.searcher.complete('title', prefix, count)
-        callback(results)
+    def search(self, field, prefix, count, callback):
+        results = self.searcher.complete(field, prefix, count)
+        response = []
+        for result in results:
+            response.append(json_decode(result))
+        callback(response)
 
     def on_response(self, response):
-        self.write(json_encode(response))
+        if (self.t is not None and self.t == 'jsonp'):
+            self.write('%s%s' % ('r=', json_encode(response)))
+        else:
+            self.write(json_encode(response))
         self.finish()
 
 class SearchHandler(tornado.web.RequestHandler):
@@ -39,18 +46,25 @@ class SearchHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous
     def get(self):
         try:
-            prefix = self.get_argument('q', None)
-            self.search('title', prefix, 30, self.async_callback(self.on_response))
+            keyword = self.get_argument('q', None)
+            self.t = self.get_argument('t', None)
+            self.search('title', keyword, 30, self.async_callback(self.on_response))
         except UnicodeDecodeError, e:
             self.write(json_encode({'error' : 'cannot decode character'}))
             self.finsh()
 
-    def search(self, t, prefix, count, callback):
-        results = self.searcher.query('title', prefix, count)
-        callback(results)
+    def search(self, field, keyword, count, callback):
+        results = self.searcher.query(field, keyword, count)
+        response = []
+        for result in results:
+            response.append(json_decode(result))
+        callback(response)
 
     def on_response(self, response):
-        self.write(json_encode(response))
+        if (self.t is not None and self.t == 'jsonp'):
+            self.write('%s%s' % ('r=', json_encode(response)))
+        else:
+            self.write(json_encode(response))
         self.finish()
 
 redis_config = {'host' : 'localhost', 'port' : 6379, 'db' : 0}

@@ -48,7 +48,7 @@ class BatchIndex(object):
                     #self.pipeline.hmset(field, data)
                     # 建立倒排索引，以分词为key
                     for w in inverted_index:
-                        self.pipeline.sadd('%s:%s' % (field, w), inverted_index[w])
+                        self.pipeline.sadd('%s:%s' % (field, w), *inverted_index[w])
                     self.pipeline.execute()
                     # 用于搜索结果排序的score
                     self.r.mset(scores)
@@ -100,7 +100,7 @@ class BatchIndex(object):
             #self.pipeline.hmset(field, data)
             # 建立倒排索引，以分词为key
             for w in inverted_index:
-                self.pipeline.sadd('%s:%s' % (field, w), inverted_index[w])
+                self.pipeline.sadd('%s:%s' % (field, w), *inverted_index[w])
             self.pipeline.execute()
             # 用于搜索结果排序的score
             self.r.mset(scores)
